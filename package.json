@@ -1,0 +1,70 @@
+{
+  "name": "repo_lens",
+  "version": "1.0.0",
+  "description": "RepoLens Backend – Agentic Workspace & AI Intelligence Hub for Engineering Teams. Features 3-Stage Hybrid RAG, Autonomous PR Reviews, Code Architecture Planner, Meeting Diarization, and RAGAS Observability.",
+  "author": "Yogesh Pant <yogeshpant942@gmail.com> (https://github.com/Yogeshpant942)",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yogeshpant942/repo_lens.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Yogeshpant942/repo_lens/issues"
+  },
+  "homepage": "https://github.com/Yogeshpant942/repo_lens#readme",
+  "keywords": [
+    "repolens",
+    "backend",
+    "ai-agent",
+    "hybrid-rag",
+    "gemini-2.0",
+    "pr-review-bot",
+    "assemblyai",
+    "prisma",
+    "pgvector",
+    "ragas",
+    "nextjs",
+    "typescript"
+  ],
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "eslint",
+    "postinstall": "prisma generate",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^2.0.17",
+    "@google/generative-ai": "^0.24.1",
+    "@langchain/community": "^0.3.56",
+    "@langchain/core": "^0.3.77",
+    "@prisma/client": "^6.16.2",
+    "@supabase/supabase-js": "^2.58.0",
+    "ai": "^5.0.56",
+    "assemblyai": "^4.16.1",
+    "axios": "^1.12.2",
+    "bcrypt": "^6.0.0",
+    "cookie": "^1.0.2",
+    "date-fns": "^4.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "next": "15.5.4",
+    "octokit": "^5.0.3",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "uuid": "^13.0.0",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie": "^1.0.0",
+    "@types/node": "^20.19.19",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19",
+    "prisma": "^6.16.2",
+    "typescript": "^5.9.3"
+  }
+}

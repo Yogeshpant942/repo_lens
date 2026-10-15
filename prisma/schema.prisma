@@ -1,0 +1,196 @@
+// ==============================================================================
+// RepoLens Backend - Prisma Database Schema
+// Author: Yogesh Pant (@Yogeshpant942)
+// PostgreSQL with pgvector extension enabled for dense vector similarity search
+// ==============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [vector]
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  name      String?
+  createdAt DateTime  @default(now())
+  sessions  Session[]
+  imageUrl  String?
+
+  userToProjects UserToProject[]
+  QuestionsAsked Question[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+  ip        String?
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name         String
+  githubUrl    String
+  deletedAt    DateTime?
+  systemPrompt String?
+
+  userToProjects UserToProject[]
+
+  Commit              Commit[]
+  sourceCodeEmbedding SourceCodeEmbedding[]
+  SavedQuestion       Question[]
+  Meetings            Meeting[]
+}
+
+model UserToProject {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  projectId String
+  user      User     @relation(fields: [userId], references: [id])
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+}
+
+model Commit {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  commitMessage      String
+  commitHash         String
+  commitAuthorName   String
+  commitAuthorAvatar String
+  commitDate         DateTime
+  summary            String
+}
+
+model Issue {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  start     String
+  end       String
+  gist      String
+  headline  String
+  summary   String
+  speaker   String?
+  solution  String?
+  status    String  @default("OPEN")
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+}
+
+model SourceCodeEmbedding {
+  id String @id @default(cuid())
+
+  summaryEmbedding Unsupported("Vector(768)")?
+  sourceCode       String
+  fileName         String
+  summary          String
+  projectId        String
+  project          Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Question {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  question String
+  answer   String?
+
+  filesRefrences Json?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  /// RAGAS-style evaluation for this Q&A
+  evaluation RAGEvaluation?
+}
+
+model Meeting {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  meetingUrl String
+  name       String
+  status     MeetingStatus @default(PROCESSING)
+  transcript Json?
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues    Issue[]
+}
+
+enum MeetingStatus {
+  PROCESSING
+  COMPLETED
+}
+
+// ── Observability & Evaluation Models ───────────────────────────────────────
+
+/// Tracks every LLM call for latency, cost, and usage observability
+model LLMCallLog {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+
+  /// Feature trigger (e.g., "ask-question", "commit-summary", "pr-review", "rerank")
+  feature          String
+  /// The Gemini model used (e.g. "gemini-2.0-flash")
+  model            String
+  /// Latency in milliseconds
+  latencyMs        Int
+  /// Approximate prompt token count
+  promptTokens     Int      @default(0)
+  /// Approximate completion token count
+  completionTokens Int      @default(0)
+  /// Whether the call succeeded
+  success          Boolean  @default(true)
+  /// Optional linked project ID
+  projectId        String?
+}
+
+/// Stores RAGAS-style faithfulness scores for Q&A evaluations
+model RAGEvaluation {
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
+
+  questionId        String   @unique
+  question          Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  /// 0–100 faithfulness score: groundedness in retrieved context
+  faithfulnessScore Int
+  /// Number of context chunks retrieved
+  chunksRetrieved   Int
+  /// Similarity score of top retrieved chunk
+  topSimilarity     Float
+  /// Number of milliseconds for the full RAG pipeline
+  ragLatencyMs      Int
+}
